@@ -1,0 +1,57 @@
+.main {
+  padding: 6rem;
+  min-height: 100vh;
+  background-color: white;
+}
+.checkerBoardHtml{
+  display: flex;
+  flex-direction: column;
+}
+.row{
+  display: flex;
+}
+.blackSquare{
+  width: 80px;
+  height: 80px;
+  background-color: rgb(86, 47, 0);
+}
+.whiteSquare{
+  width: 80px;
+  height: 80px;
+  justify-content: center;
+  align-items: center;
+  background-color: rgb(255, 248, 206);
+}
+.checkerBoard{
+  border: 5px black solid;
+  border-collapse: collapse;
+}
+.piece1{
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: white;
+  border: 3px rgba(128, 128, 128, 0.3) dashed;
+  margin: auto;
+}
+.piece2{
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: black;
+  border: 3px rgba(128, 128, 128, 0.5) dashed;
+  margin: auto;
+}
+.ghostPiece{
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: gray;
+  margin: auto;
+}
+.highlight{
+  background-color: yellow;
+}
+.selected{
+  background-color: blue;
+}
