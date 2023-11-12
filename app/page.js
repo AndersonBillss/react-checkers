@@ -1,71 +1,193 @@
 'use client'
 import styles from './page.module.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useReducer } from 'react'
 
+const initialState = {
+    selectedPieceRowIndex: null,
+    selectedPieceColumnIndex: null,
+    turn: 'player1',
+    board: 
+    [
+        [
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+        [
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
+            {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        ],
+    ]
+}
+
+const checkersReducer = (state, action) => {
+    switch(action.type){
+        case 'SWITCHPLAYER':
+            const updatedBoardSwitchPlayer = state.board.map(row =>
+                row.map(cell => ({
+                    ...cell,
+                    selected: false,
+                    move: { canMove: false, moves: [] }
+                }))
+            );
+        
+            return {
+                ...state,
+                turn: state.turn === 'player1' ? 'player2' : 'player1',
+                selectedPieceRowIndex: null,
+                selectedPieceColumnIndex: null,
+                board: updatedBoardSwitchPlayer
+            };
+
+
+
+
+        case 'RANDOMIZEBOARD':
+            let randomBoard = [
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0]
+            ]
+            for(let i=0; i<8; i++){
+                for(let j=0; j<4; j++){
+                    randomBoard[i][j] = {player: Math.floor(Math.random()*3), type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+                }
+            }
+            return{
+                ...state,
+                board: randomBoard
+            }
+
+
+
+
+        case 'SELECTPIECE':
+            let rowIndex1 = action.coords[0]
+            let columnIndex1 = action.coords[1]
+            const updatedBoard1 = [...state.board];
+
+
+    
+            // Select the clicked piece
+            updatedBoard1[rowIndex1][columnIndex1].selected = true;
+    
+            //clear ghost pieces
+            for (let i = 0; i < updatedBoard1.length; i++) {
+                for (let j = 0; j < updatedBoard1[i].length; j++) {
+                    updatedBoard1[i][j].type.ghost = false;
+                }
+            }
+    
+            //add ghost pieces where the piece can move
+            const updatedBoardGhosts = updatedBoard1[rowIndex1][columnIndex1].move.moves
+            for(let i=0; i<updatedBoardGhosts.length; i++){
+                updatedBoard1[updatedBoardGhosts[i][0]][updatedBoardGhosts[i][1]].type.ghost = true
+            }
+
+            if (state.selectedPieceRowIndex !== null && state.selectedPieceColumnIndex !== null) {
+                updatedBoard1[state.selectedPieceRowIndex][state.selectedPieceColumnIndex].selected = false;
+            }
+
+            return{
+                ...state,
+                // Update the selected piece coordinates
+                selectedPieceRowIndex: rowIndex1,
+                selectedPieceColumnIndex: columnIndex1,
+                //update board
+                board: updatedBoard1,
+            }
+
+
+
+            case 'TAKETURN': 
+                let rowIndex2 = action.coords[0]
+                let columnIndex2 = action.coords[1]
+                const updatedBoard2 = [...state.board]
+
+                //get rid of all ghost pieces and remove the highlight from all pieces
+                for (let i = 0; i < updatedBoard2.length; i++) {
+                    for (let j = 0; j < updatedBoard2[i].length; j++) {
+                        updatedBoard2[i][j].type.ghost = false;
+                        updatedBoard2[i][j].move.canMove = false;
+                        updatedBoard2[i][j].move.moves = [];
+                    }
+                }
+                const selectedPiece = state.board[state.selectedPieceRowIndex][state.selectedPieceColumnIndex]
+                //put the selected piece in the new location
+                if(selectedPiece.player !== 0){
+                    updatedBoard2[rowIndex2][columnIndex2] = selectedPiece
+                    updatedBoard2[rowIndex2][columnIndex2].selected = false
+                }
+                //get rid of selected piece
+                updatedBoard2[state.selectedPieceRowIndex][state.selectedPieceColumnIndex] = {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+        
+                //update turn and board
+                return{
+                    ...state,
+                    turn: state.turn==='player1' ? 'player2' : 'player1',
+                    board: updatedBoard2
+                }
+
+
+        default:
+            return state
+    }
+}
 
 export default function CheckerBoard(){
-    const [selectedPieceRowIndex, setSelectedPieceRowIndex] = useState(null);
-    const [selectedPieceColumnIndex, setSelectedPieceColumnIndex] = useState(null)
-    const [turn, setTurn] = useState('player1')
-    const [board, setBoard] = useState(
-        [
-            [
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 1, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-            [
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false},
-                {player: 2, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            ],
-        ]
-    )
 
-    for(let i=0; i<board.length; i++){
-        for(let j=0; j<board[i].length; j++){
-            board[i][j].move.moves=[]
-            if(board[i][j].player > 0 && board[i][j].type.ghost == false){
+    const [state, dispatch] = useReducer(checkersReducer, initialState)
 
-                //which way the board is shifted
+    for(let i=0; i<state.board.length; i++){
+        for(let j=0; j<state.board[i].length; j++){
+            state.board[i][j].move.moves=[]
+            if(state.board[i][j].player > 0 && state.board[i][j].type.ghost == false){
+
+                //which way the state.board is shifted
                 let shift
                 if(i%2 == 0){
                     shift = 1
@@ -76,35 +198,35 @@ export default function CheckerBoard(){
                 let canMoveCondition = false
 
                 //moving conditions for player 1
-                if(turn === 'player1' && board[i][j].player == 1){
+                if(state.turn === 'player1' && state.board[i][j].player == 1){
                     //normal moving conditions
                     if(i<7){
-                        canMoveCondition = (board[i+1][j].player == 0)
-                        if(board[i+1][j].player == 0){
-                            board[i][j].move.moves.push([i+1,j])
+                        canMoveCondition = (state.board[i+1][j].player == 0)
+                        if(state.board[i+1][j].player == 0){
+                            state.board[i][j].move.moves.push([i+1,j])
                         }
                         if((j-shift <= 3) && (j-shift >= 0)){
-                            canMoveCondition = canMoveCondition || (board[i+1][j-shift].player == 0)  
-                            if(board[i+1][j-shift].player == 0){
-                                board[i][j].move.moves.push([i+1,j-shift])
+                            canMoveCondition = canMoveCondition || (state.board[i+1][j-shift].player == 0)  
+                            if(state.board[i+1][j-shift].player == 0){
+                                state.board[i][j].move.moves.push([i+1,j-shift])
                             }
                         }
                         //jumping moving conditions
                         if(i<6){
                             if(j<=100){
-                                if(board[i+1][j].player == 2){
-                                    if(board[i+2][j-shift] == 0){
+                                if(state.board[i+1][j].player == 2){
+                                    if(state.board[i+2][j-shift] == 0){
                                         canMoveCondition = true
-                                        board[i][j].move.moves.push([i+2,j-shift])
+                                        state.board[i][j].move.moves.push([i+2,j-shift])
                                     }
                                 }
                             }
 
                             if(j<=2 && j>=1){
-                                if(board[i+1][j+shift].player == 2){
-                                    if(board[i+2][j+shift] == 0){
+                                if(state.board[i+1][j+shift].player == 2){
+                                    if(state.board[i+2][j+shift] == 0){
                                         canMoveCondition = true
-                                        board[i][j].move.moves.push([i+2,j-shift])
+                                        state.board[i][j].move.moves.push([i+2,j-shift])
                                     }
                                 }
                             }
@@ -113,103 +235,43 @@ export default function CheckerBoard(){
                 }
                 
                 //moving conditions for player 2
-                if(turn == 'player2' && board[i][j].player == 2){
+                if(state.turn == 'player2' && state.board[i][j].player == 2){
                     if(i>0){
-                        canMoveCondition = (board[i-1][j].player == 0)
-                        if(board[i-1][j].player == 0){
-                            board[i][j].move.moves.push([i-1,j])
+                        canMoveCondition = (state.board[i-1][j].player == 0)
+                        if(state.board[i-1][j].player == 0){
+                            state.board[i][j].move.moves.push([i-1,j])
                         }
                         if((j-shift <= 3) && (j-shift >= 0)){
-                            canMoveCondition = canMoveCondition || (board[i-1][j-shift].player == 0)
-                            if(board[i-1][j-shift].player == 0){
-                                board[i][j].move.moves.push([i-1,j-shift])
+                            canMoveCondition = canMoveCondition || (state.board[i-1][j-shift].player == 0)
+                            if(state.board[i-1][j-shift].player == 0){
+                                state.board[i][j].move.moves.push([i-1,j-shift])
                             }
                         }
                     }
                 }
 
                 if(canMoveCondition){
-                    board[i][j].move.canMove = true
+                    state.board[i][j].move.canMove = true
                 }
+                
             }
         }
     }
+
+
+
+    
 
 
     function randomizeBoard(){
-        let randomBoard = [
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0],
-            [0,0,0,0]
-        ]
-        for(let i=0; i<8; i++){
-            for(let j=0; j<4; j++){
-                randomBoard[i][j] = {player: Math.floor(Math.random()*3), type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-            }
-        }
-        setBoard(randomBoard)
+        dispatch({ type: 'RANDOMIZEBOARD' })
     }
+
     function selectPiece(rowIndex, columnIndex){
-        if (selectedPieceRowIndex !== null && selectedPieceColumnIndex !== null) {
-            const updatedBoard = [...board];
-            updatedBoard[selectedPieceRowIndex][selectedPieceColumnIndex].selected = false;
-            setBoard(updatedBoard);
-        }
-
-        // Select the clicked piece
-        const updatedBoard = [...board];
-        updatedBoard[rowIndex][columnIndex].selected = true;
-
-        //clear ghost pieces
-        for (let i = 0; i < updatedBoard.length; i++) {
-            for (let j = 0; j < updatedBoard[i].length; j++) {
-                updatedBoard[i][j].type.ghost = false;
-            }
-        }
-
-        //add ghost pieces where the piece can move
-        const updatedBoardGhosts = updatedBoard[rowIndex][columnIndex].move.moves
-        for(let i=0; i<updatedBoardGhosts.length; i++){
-            updatedBoard[updatedBoardGhosts[i][0]][updatedBoardGhosts[i][1]].type.ghost = true
-        }
-        setBoard(updatedBoard);
-
-        // Update the selected piece coordinates
-        setSelectedPieceRowIndex(rowIndex);
-        setSelectedPieceColumnIndex(columnIndex);
-    
-
+        dispatch({ type: 'SELECTPIECE', coords: [rowIndex, columnIndex]})
     }
     function takeTurn(rowIndex, columnIndex){
-        let updatedBoard = board
-
-        for (let i = 0; i < updatedBoard.length; i++) {
-            for (let j = 0; j < updatedBoard[i].length; j++) {
-                updatedBoard[i][j].type.ghost = false;
-                updatedBoard[i][j].move.canMove = false;
-                updatedBoard[i][j].move.moves = [];
-            }
-        }
-
-        updatedBoard[rowIndex][columnIndex] = board[selectedPieceRowIndex][selectedPieceColumnIndex]
-        updatedBoard[rowIndex][columnIndex].selected = false
-        //get rid of selected piece
-        updatedBoard[selectedPieceRowIndex][selectedPieceColumnIndex] = {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
-
-        if(turn == 'player1'){
-            setTurn('player2')
-        } else {
-            setTurn('player1')
-        }
-
-        /* console.log(updatedBoard) */
-
-        setBoard(updatedBoard)
+        dispatch({ type: 'TAKETURN', coords: [rowIndex, columnIndex]})
     }
     function none() {
         return
@@ -226,19 +288,19 @@ export default function CheckerBoard(){
         return(
             <td className={`
             ${styles.blackSquare}
-            ${board[rowIndex][columnIndex].move.canMove == true ? styles.highlight : styles.none}
-            ${board[rowIndex][columnIndex].selected == true ? styles.selected : styles.none}
+            ${state.board[rowIndex][columnIndex].move.canMove == true ? styles.highlight : styles.none}
+            ${state.board[rowIndex][columnIndex].selected == true ? styles.selected : styles.none}
             `}
             onClick={
-                board[rowIndex][columnIndex].type.ghost == true ? () => {takeTurn(rowIndex, columnIndex)}
-                : board[rowIndex][columnIndex].move.canMove == true ? () => {selectPiece(rowIndex, columnIndex)} : none} 
+                state.board[rowIndex][columnIndex].type.ghost == true ? () => {takeTurn(rowIndex, columnIndex)}
+                : state.board[rowIndex][columnIndex].move.canMove == true ? () => {selectPiece(rowIndex, columnIndex)} : none} 
             key={`black-${(rowIndex*4) + columnIndex}
             `}
             >
                 <div className={`
-                ${board[rowIndex][columnIndex].player == 1 ? styles.piece1 : styles.none}
-                ${board[rowIndex][columnIndex].player == 2 ? styles.piece2 : styles.none}
-                ${board[rowIndex][columnIndex].type.ghost == true ? styles.ghostPiece : styles.none}
+                ${state.board[rowIndex][columnIndex].player == 1 ? styles.piece1 : styles.none}
+                ${state.board[rowIndex][columnIndex].player == 2 ? styles.piece2 : styles.none}
+                ${state.board[rowIndex][columnIndex].type.ghost == true ? styles.ghostPiece : styles.none}
                 `}
                 ></div>
             </td>
@@ -247,11 +309,11 @@ export default function CheckerBoard(){
 
     return(
         <>
-            <table className={styles.checkerBoard}>
+            <table className={styles.checkerboard}>
                 <tbody>
-                    {board.map((row, rowIndex) => (
+                    {state.board.map((row, rowIndex) => (
                         <tr key={rowIndex+1}>
-                        {board[rowIndex].map((cell, columnIndex) => (
+                        {state.board[rowIndex].map((cell, columnIndex) => (
                             (rowIndex % 2 === 1 ? 
                             <>
                             {WhiteSquare(rowIndex, columnIndex)}
@@ -269,27 +331,8 @@ export default function CheckerBoard(){
                 </tbody>
             </table>
             <button onClick={randomizeBoard}>Randomize Board</button>
-            <button onClick={() => {
-                const updatedBoard = board.map(row => row.map(cell => ({ ...cell, type: {ghost: false}, move: {canMove: false, moves: []}, selected: false})));
-                if(turn == 'player1'){
-                    setTurn('player2')
-                } else {
-                    setTurn('player1')
-                }
-                setBoard(updatedBoard)
-            }}>Switch Players</button>
-            <button onClick={() => console.log(board)}>see board data</button>
+            <button onClick={() => {dispatch({ type: 'SWITCHPLAYER' })}}>Switch Players</button>
+            <button onClick={() => console.log(state.board)}>see board data</button>
         </>
     )
 }
-/////////////////////////////////////
-/*                             //console log all of the positions for player 1
-                            //array position of piece
-                            console.log(`Array position: ${i}, ${j}`)
-                            //coordinate position of piece
-                            console.log(`Coordinate position: ${((j+(shift==1?0:1))*2)+(shift==1?1:0)},${(8-i)}`)
-                            console.log(`Shift: ${shift}`)
-                            //move position in array
-                            console.log(`Move array position: ${i+1},${j-shift}`)
-                            //move position coordinates
-                            console.log(`Move coordinate position: ${(((j-shift)+(shift==1?1:0))*2)+(shift==1?0:1)},${(7-i)}`) */
