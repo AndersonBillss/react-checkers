@@ -33,6 +33,9 @@
   background-color: white;
   border: 3px rgba(128, 128, 128, 0.3) dashed;
   margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .piece2{
   width: 60px;
@@ -41,6 +44,9 @@
   background-color: black;
   border: 3px rgba(128, 128, 128, 0.5) dashed;
   margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .ghostPiece{
   width: 60px;
@@ -54,4 +60,9 @@
 }
 .selected{
   background-color: blue;
+}
+.crownImg{
+  width: 25px;
+  height: 25px;
+  background-color: goldenrod;
 }
