@@ -1,11 +1,12 @@
 'use client'
 import Image from 'next/image'
 import styles from './page.module.css'
-import { useState, useEffect, useReducer, Fragment } from 'react'
+import { useState, useEffect, useRef, useReducer, Fragment } from 'react'
 
 const initialState = {
     jumpChain: false,
     jumpChainStopper: true,
+    switchPlayerStopper: false,
     selectedPieceRowIndex: null,
     selectedPieceColumnIndex: null,
     turn: 'player1',
@@ -82,6 +83,7 @@ const checkersReducer = (state, action) => {
                 turn: state.turn === 'player1' ? 'player2' : 'player1',
                 selectedPieceRowIndex: null,
                 jumpChain: false,
+/*                 switchPlayerStopper: true, */
                 selectedPieceColumnIndex: null,
                 board: updatedBoardSwitchPlayer
             };
@@ -91,19 +93,19 @@ const checkersReducer = (state, action) => {
         case 'BOARDSET':
             const checkerboardPresetData = [
                 [[0],  [0],  [0],  [0],   ],
+                [   [1],  [1],  [1],  [0],],
+                [[0],  [0],  [2],  [0],   ],
+                [   [1],  [1],  [1],  [0],],
+                [[0],  [2],  [0],  [0],   ],
+                [   [1],  [1],  [1],  [0],],
+                [[0],  [2],  [0],  [0],   ],
                 [   [0],  [0],  [0],  [0],],
-                [[0],  [2],  [2],  [0],   ],
-                [   [0],  [0],  [0],  [0],],
-                [[2],  [0],  [2],  [2],   ],
-                [   [0],  [0],  [0],  [0],],
-                [[0],  [2],  [0],  [2],   ],
-                [   [1],  [1],  [1],  [1],],
             ]
             let checkerboardPreset = []
             for(let i=0; i<8; i++){
                 checkerboardPreset[i] = []
                 for(let j=0; j<4; j++){
-                    checkerboardPreset[i][j] = {player: checkerboardPresetData[i][j][0], type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+                    checkerboardPreset[i][j] = {player: checkerboardPresetData[i][j][0], type: {king: checkerboardPresetData[i][j][0] > 0 ? true : false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
                 }
             }
             return{ 
@@ -112,6 +114,29 @@ const checkersReducer = (state, action) => {
             }
 
 
+        case 'RESETBOARD':
+            const checkerboardResetData = [
+                [[1],  [1],  [1],  [1],   ],
+                [   [1],  [1],  [1],  [1],],
+                [[1],  [1],  [1],  [1],   ],
+                [   [0],  [0],  [0],  [0],],
+                [[0],  [0],  [0],  [0],   ],
+                [   [2],  [2],  [2],  [2],],
+                [[2],  [2],  [2],  [2],   ],
+                [   [2],  [2],  [2],  [2],],
+            ]
+            let checkerboardReset = []
+            for(let i=0; i<8; i++){
+                checkerboardReset[i] = []
+                for(let j=0; j<4; j++){
+                    checkerboardReset[i][j] = {player: checkerboardResetData[i][j][0], type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+                }
+            }
+            return{ 
+                ...state,
+                turn: state.turn == 'player1' ? 'player2' : 'player1',
+                board: checkerboardReset
+            }
 
 
         case 'RANDOMIZEBOARD':
@@ -173,6 +198,8 @@ const checkersReducer = (state, action) => {
                 //update board
                 board: updatedBoard1,
             }
+
+
 
 
 
@@ -244,60 +271,60 @@ const checkersReducer = (state, action) => {
                 //get rid of jumped piece
                 updatedBoard2[jumpedPieceRow][jumpedPieceColumn] = {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
 
-
-                    if(rowIndex2 < 6){
-                        if(columnIndex2-shift<=3 && columnIndex2-shift>=0){
-                            if((updatedBoard2[rowIndex2+1][columnIndex2-shift].player == 2 && state.turn == 'player1') || (updatedBoard2[rowIndex2+1][columnIndex2-shift].player == 1 && isKing && state.turn == 'player2')){
-                                if(updatedBoard2[rowIndex2+2][columnIndex2-shift].player == 0 && rowIndex2 < 6){
-                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2+2,columnIndex2-shift])
-                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
-                                    newSelectedPieceRowIndex = rowIndex2
-                                    newSelectedPieceColumnIndex = columnIndex2
-                                    jumpChain = true
-                                } 
-                            }
+                //if the piece can jump again, set jumpchain to true
+                if(rowIndex2 < 6){
+                    if(columnIndex2-shift<=3 && columnIndex2-shift>=0){
+                        if((updatedBoard2[rowIndex2+1][columnIndex2-shift].player == 2 && state.turn == 'player1') || (updatedBoard2[rowIndex2+1][columnIndex2-shift].player == 1 && isKing && state.turn == 'player2')){
+                            if(updatedBoard2[rowIndex2+2][columnIndex2-shift].player == 0 && rowIndex2 < 6){
+                                updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2+2,columnIndex2-shift])
+                                updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                newSelectedPieceRowIndex = rowIndex2
+                                newSelectedPieceColumnIndex = columnIndex2
+                                jumpChain = true
+                            } 
                         }
-    
-                        if(columnIndex2+shift<=3 && columnIndex2+shift>=0){
-                            if(((updatedBoard2[rowIndex2+1][columnIndex2].player == 2 && state.turn == 'player1') || (updatedBoard2[rowIndex2+1][columnIndex2].player == 1 && isKing && state.turn == 'player2'))){
-                                if(updatedBoard2[rowIndex2+2][columnIndex2+shift].player == 0 && rowIndex2 < 6){
-                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2+2,columnIndex2+shift])
-                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
-                                    newSelectedPieceRowIndex = rowIndex2
-                                    newSelectedPieceColumnIndex = columnIndex2
-                                    jumpChain = true
-                                }
-                            }
-                        }
-
                     }
 
-                
-                    if(rowIndex2 > 1){
-                        if(columnIndex2-shift<=3 && columnIndex2-shift>=0){
-                            if((updatedBoard2[rowIndex2-1][columnIndex2-shift].player == 1 && state.turn == 'player2') || (updatedBoard2[rowIndex2-1][columnIndex2-shift].player == 2 && isKing && state.turn == 'player1')){
-                                if(updatedBoard2[rowIndex2-2][columnIndex2-shift].player == 0 && rowIndex2 < 6){
-                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2-2,columnIndex2-shift])
-                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
-                                    newSelectedPieceRowIndex = rowIndex2
-                                    newSelectedPieceColumnIndex = columnIndex2
-                                    jumpChain = true
-                                } 
-                            }
-                        }
-    
-                        if(columnIndex2+shift<=3 && columnIndex2+shift>=0){
-                            if(((updatedBoard2[rowIndex2-1][columnIndex2].player == 1 && state.turn == 'player2')  || (updatedBoard2[rowIndex2-1][columnIndex2].player == 2 && isKing && state.turn == 'player1'))){
-                                if(updatedBoard2[rowIndex2-2][columnIndex2+shift].player == 0 && rowIndex2 < 6){
-                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2-2,columnIndex2+shift])
-                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
-                                    newSelectedPieceRowIndex = rowIndex2
-                                    newSelectedPieceColumnIndex = columnIndex2
-                                    jumpChain = true
-                                }
+                    if(columnIndex2+shift<=3 && columnIndex2+shift>=0){
+                        if(((updatedBoard2[rowIndex2+1][columnIndex2].player == 2 && state.turn == 'player1') || (updatedBoard2[rowIndex2+1][columnIndex2].player == 1 && isKing && state.turn == 'player2'))){
+                            if(updatedBoard2[rowIndex2+2][columnIndex2+shift].player == 0 && rowIndex2 < 6){
+                                updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2+2,columnIndex2+shift])
+                                updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                newSelectedPieceRowIndex = rowIndex2
+                                newSelectedPieceColumnIndex = columnIndex2
+                                jumpChain = true
                             }
                         }
                     }
+
+                }
+
+            
+                if(rowIndex2 > 1){
+                    if(columnIndex2-shift<=3 && columnIndex2-shift>=0){
+                        if((updatedBoard2[rowIndex2-1][columnIndex2-shift].player == 1 && state.turn == 'player2') || (updatedBoard2[rowIndex2-1][columnIndex2-shift].player == 2 && isKing && state.turn == 'player1')){
+                            if(updatedBoard2[rowIndex2-2][columnIndex2-shift].player == 0 && rowIndex2 > 1){
+                                updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2-2,columnIndex2-shift])
+                                updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                newSelectedPieceRowIndex = rowIndex2
+                                newSelectedPieceColumnIndex = columnIndex2
+                                jumpChain = true
+                            } 
+                        }
+                    }
+
+                    if(columnIndex2+shift<=3 && columnIndex2+shift>=0){
+                        if(((updatedBoard2[rowIndex2-1][columnIndex2].player == 1 && state.turn == 'player2')  || (updatedBoard2[rowIndex2-1][columnIndex2].player == 2 && isKing && state.turn == 'player1'))){
+                            if(updatedBoard2[rowIndex2-2][columnIndex2+shift].player == 0 && rowIndex2 > 1){
+                                updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2-2,columnIndex2+shift])
+                                updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                newSelectedPieceRowIndex = rowIndex2
+                                newSelectedPieceColumnIndex = columnIndex2
+                                jumpChain = true
+                            }
+                        }
+                    }
+                }
 
             }
 
@@ -327,17 +354,15 @@ export default function CheckerBoard(){
 
 
 
+    let player1CanMove = false
+    let player2CanMove = false
+
+    let winningPlayer = null
+    let player1PiecesLeft = 0
+    let player2PiecesLeft = 0
 
     if(!state.jumpChainStopper && state.jumpChain){
         state.jumpChainStopper = true
-        for(let i=0; i<state.board.length; i++){
-            for(let j=0; j<state.board[i].length; j++){
-                if(i != state.selectedPieceRowIndex && j != state.selectedPieceColumnIndex){
-                state.board[i][j].move.canMove = false
-                state.board[i][j].move.moves = []
-                }
-            }
-        }
         dispatch({ type: 'SELECTPIECE', coords: [state.selectedPieceRowIndex, state.selectedPieceColumnIndex]})
     } else {
         for(let i=0; i<state.board.length; i++){
@@ -349,6 +374,9 @@ export default function CheckerBoard(){
 
     
     function checkMoveConditions(i, j){
+
+
+
         let nextPlayer = 0
         state.board[i][j].move.moves=[]
         if(state.board[i][j].player > 0 && state.board[i][j].type.ghost == false){
@@ -441,11 +469,37 @@ export default function CheckerBoard(){
 
             if(state.board[i][j].move.moves.length > 0){
                 state.board[i][j].move.canMove = true
+                state.board[i][j].player == 1 ? player1CanMove = true :
+                state.board[i][j].player == 2 ? player2CanMove = true : ()=>{}
+                state.switchPlayerStopper = false
             }
-            
+            if(state.board[i][j].player == 1){
+                player1PiecesLeft++
+            }
+            if(state.board[i][j].player == 2){
+                player2PiecesLeft++
+            } 
         }
     }
 
+
+
+    //winning conditions
+    if(player1PiecesLeft == 0 && state.jumpChain == false){
+        winningPlayer = 'black'
+    }
+    if(player2PiecesLeft == 0 && state.jumpChain == false){
+        winningPlayer = 'white'
+    }
+    if(((state.turn == 'player1' && !player1CanMove) || (state.turn == 'player2' && !player2CanMove)) && winningPlayer == null && state.jumpChain == false){
+        if(!state.switchPlayerStopper){
+            state.switchPlayerStopper = true
+            dispatch({ type: 'SWITCHPLAYER'})
+        } else {
+            winningPlayer = 'tie'
+        }
+    }
+ 
 
 
     
@@ -499,32 +553,57 @@ export default function CheckerBoard(){
     }
 
     return(
-        <>
-            <table className={styles.checkerboard}>
-                <tbody>
-                    {state.board.map((row, rowIndex) => (
-                        <tr key={rowIndex+1}>
-                        {state.board[rowIndex].map((cell, columnIndex) => (
-                            (rowIndex % 2 === 1 ? 
-                            <Fragment key={(rowIndex*4+columnIndex)}>
-                            {WhiteSquare(rowIndex, columnIndex)}
-                            {BlackSquare(rowIndex, columnIndex)}
-                            </Fragment> 
-                            :
-                            <Fragment key={(rowIndex*4+columnIndex)}>
-                            {BlackSquare(rowIndex, columnIndex)}
-                            {WhiteSquare(rowIndex, columnIndex)}
-                            </Fragment>
-                            )
+        <main className={styles.main}>
+            <div className={styles.center}>
+                <h1 className={styles.title}>Checkers</h1>
+                <table className={`${styles.checkerboard} ${styles.checkersBorder}`}>
+                    <tbody>
+                        {state.board.map((row, rowIndex) => (
+                            <tr key={rowIndex+1}>
+                            {row.map((cell, columnIndex) => (
+                                (rowIndex % 2 === 1 ? 
+                                <Fragment key={(rowIndex*4+columnIndex)}>
+                                {WhiteSquare(rowIndex, columnIndex)}
+                                {BlackSquare(rowIndex, columnIndex)}
+                                </Fragment> 
+                                :
+                                <Fragment key={(rowIndex*4+columnIndex)}>
+                                {BlackSquare(rowIndex, columnIndex)}
+                                {WhiteSquare(rowIndex, columnIndex)}
+                                </Fragment>
+                                )
+                            ))}
+                            </tr>
                         ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            <button onClick={randomizeBoard}>Randomize Board</button>
-            <button onClick={() => {dispatch({ type: 'BOARDSET' })}}>Set Board Preset</button>
-            <button onClick={() => {dispatch({ type: 'SWITCHPLAYER' })}}>Switch Players</button>
-            <button onClick={() => console.log(state.board)}>see board data</button>
-        </>
+                    </tbody>
+                </table>
+                
+            
+{/* 
+                BUTTONS FOR TESTING PURPOSES
+                <div>
+                    <button onClick={randomizeBoard}>Randomize Board</button>
+                    <button onClick={() => {dispatch({ type: 'BOARDSET' })}}>Set Board Preset</button>
+                    <button onClick={() => {dispatch({ type: 'SWITCHPLAYER' })}}>Switch Players</button>
+                    <button onClick={() => console.log(state.board)}>see board data</button>
+                </div>
+                
+                
+*/}
+            </div>
+            {winningPlayer == null ? 
+            (
+                <div className={styles.center}>
+                    <button className={styles.resetButton} onClick={() => dispatch({ type: 'RESETBOARD' })}>Reset Game</button>
+                </div>
+            )
+            :
+            (
+                <div className={styles.center}>
+                    <h1>{winningPlayer === 'tie' ? "It's a tie" : `${winningPlayer} wins`}</h1>
+                    <button className={styles.resetButton} onClick={() => dispatch({ type: 'RESETBOARD' })}>New Game</button>
+                </div>
+            )}
+        </main>
     )
 }

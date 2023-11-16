@@ -1,6 +1,6 @@
 .main {
   padding: 6rem;
-  min-height: 150vh;
+  min-height: 100vh;
   background-color: white;
 }
 .checkerBoardHtml{
@@ -11,24 +11,25 @@
   display: flex;
 }
 .blackSquare{
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   background-color: rgb(86, 47, 0);
 }
 .whiteSquare{
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   justify-content: center;
   align-items: center;
   background-color: rgb(255, 248, 206);
 }
-.checkerBoard{
+.checkerboard{
   border: 5px black solid;
   border-collapse: collapse;
 }
+
 .piece1{
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: white;
   border: 3px rgba(128, 128, 128, 0.3) dashed;
@@ -38,8 +39,8 @@
   align-items: center;
 }
 .piece2{
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: black;
   border: 3px rgba(128, 128, 128, 0.5) dashed;
@@ -49,8 +50,8 @@
   align-items: center;
 }
 .ghostPiece{
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: gray;
   margin: auto;
@@ -62,7 +63,34 @@
   background-color: blue;
 }
 .crown{
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   background-color: goldenrod;
+}
+.resetButton{
+  padding: 5px;
+  justify-self: center;
+  margin: 10px;
+  background-color: red;
+  color: white;
+  box-shadow: 0 0 5px lightcoral;
+  font-size: 24px;
+  font-weight: bold;
+}
+.resetButton:hover{
+  filter: brightness(95%);
+}
+.resetButton:active{
+  filter: brightness(105%);
+}
+.center{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.title{
+  font-size: 48px;
+  text-shadow: 2px 2px 5px lightcoral;
+  color:darkred;
+  margin-bottom: 15px;
 }
