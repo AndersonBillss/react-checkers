@@ -1,10 +1,11 @@
 'use client'
 import Image from 'next/image'
 import styles from './page.module.css'
-import { useState, useEffect, useReducer } from 'react'
+import { useState, useEffect, useReducer, Fragment } from 'react'
 
 const initialState = {
     jumpChain: false,
+    jumpChainStopper: true,
     selectedPieceRowIndex: null,
     selectedPieceColumnIndex: null,
     turn: 'player1',
@@ -67,16 +68,20 @@ const checkersReducer = (state, action) => {
             const updatedBoardSwitchPlayer = state.board.map(row =>
                 row.map(cell => ({
                     ...cell,
-                    ghost: false,
+                    type:{
+                        king: cell.type.king,
+                        ghost: false
+                    },
                     selected: false,
                     move: { canMove: false, moves: [] }
                 }))
             );
-        
+
             return {
                 ...state,
                 turn: state.turn === 'player1' ? 'player2' : 'player1',
                 selectedPieceRowIndex: null,
+                jumpChain: false,
                 selectedPieceColumnIndex: null,
                 board: updatedBoardSwitchPlayer
             };
@@ -85,14 +90,14 @@ const checkersReducer = (state, action) => {
 
         case 'BOARDSET':
             const checkerboardPresetData = [
-                [[1],  [1],  [1],  [1],   ],
-                [   [2],  [2],  [2],  [0],],
-                [[0],  [0],  [0],  [0],   ],
-                [   [2],  [2],  [2],  [0],],
-                [[0],  [0],  [1],  [0],   ],
-                [   [0],  [0],  [0],  [0],],
                 [[0],  [0],  [0],  [0],   ],
                 [   [0],  [0],  [0],  [0],],
+                [[0],  [2],  [2],  [0],   ],
+                [   [0],  [0],  [0],  [0],],
+                [[2],  [0],  [2],  [2],   ],
+                [   [0],  [0],  [0],  [0],],
+                [[0],  [2],  [0],  [2],   ],
+                [   [1],  [1],  [1],  [1],],
             ]
             let checkerboardPreset = []
             for(let i=0; i<8; i++){
@@ -138,6 +143,8 @@ const checkersReducer = (state, action) => {
             let columnIndex1 = action.coords[1]
             const updatedBoard1 = [...state.board];
 
+
+
             //clear ghost pieces
             for (let i = 0; i < updatedBoard1.length; i++) {
                 for (let j = 0; j < updatedBoard1[i].length; j++) {
@@ -162,6 +169,7 @@ const checkersReducer = (state, action) => {
                 // Update the selected piece coordinates
                 selectedPieceRowIndex: rowIndex1,
                 selectedPieceColumnIndex: columnIndex1,
+                jumpChainStopper: true,
                 //update board
                 board: updatedBoard1,
             }
@@ -172,7 +180,10 @@ const checkersReducer = (state, action) => {
             let rowIndex2 = action.coords[0]
             let columnIndex2 = action.coords[1]
             const updatedBoard2 = [...state.board]
-            let jumpChain = state.jumpChain
+            let jumpChain = false
+
+            let newSelectedPieceRowIndex = null
+            let newSelectedPieceColumnIndex = null
 
             //get rid of all ghost pieces and remove the highlight from all pieces
             for (let i = 0; i < updatedBoard2.length; i++) {
@@ -185,9 +196,21 @@ const checkersReducer = (state, action) => {
             const selectedPiece = state.board[state.selectedPieceRowIndex][state.selectedPieceColumnIndex]
 
             const playerNumber = (rowIndex2-state.selectedPieceRowIndex)/2
+
+
+            
+            //put the selected piece in the new location
+            if(selectedPiece.player !== 0){
+                updatedBoard2[rowIndex2][columnIndex2] = selectedPiece
+                updatedBoard2[rowIndex2][columnIndex2].selected = false
+             }
+            //get rid of selected piece
+            updatedBoard2[state.selectedPieceRowIndex][state.selectedPieceColumnIndex] = {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+
             //if the player jumps, remove the piece in between the previous position and the new position
             if(Number(Math.abs(rowIndex2-state.selectedPieceRowIndex)) > 1){
                 const jumpedPieceRow = state.selectedPieceRowIndex+playerNumber
+                const isKing = updatedBoard2[rowIndex2][columnIndex2].type.king
 
                 let shift
                 if(rowIndex2 % 2 == 0){
@@ -203,7 +226,7 @@ const checkersReducer = (state, action) => {
                     jumpDirection = -1
                 }
                 
-                //finding the coordinates of the jumped piece
+                //finding the coordinates of the jumped piece and testing for jump chain
                 let jumpedPieceColumn
                 if (playerNumber == 1){
                     if(jumpDirection == shift){
@@ -221,22 +244,75 @@ const checkersReducer = (state, action) => {
                 //get rid of jumped piece
                 updatedBoard2[jumpedPieceRow][jumpedPieceColumn] = {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
 
+
+                    if(rowIndex2 < 6){
+                        if(columnIndex2-shift<=3 && columnIndex2-shift>=0){
+                            if((updatedBoard2[rowIndex2+1][columnIndex2-shift].player == 2 && state.turn == 'player1') || (updatedBoard2[rowIndex2+1][columnIndex2-shift].player == 1 && isKing && state.turn == 'player2')){
+                                if(updatedBoard2[rowIndex2+2][columnIndex2-shift].player == 0 && rowIndex2 < 6){
+                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2+2,columnIndex2-shift])
+                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                    newSelectedPieceRowIndex = rowIndex2
+                                    newSelectedPieceColumnIndex = columnIndex2
+                                    jumpChain = true
+                                } 
+                            }
+                        }
+    
+                        if(columnIndex2+shift<=3 && columnIndex2+shift>=0){
+                            if(((updatedBoard2[rowIndex2+1][columnIndex2].player == 2 && state.turn == 'player1') || (updatedBoard2[rowIndex2+1][columnIndex2].player == 1 && isKing && state.turn == 'player2'))){
+                                if(updatedBoard2[rowIndex2+2][columnIndex2+shift].player == 0 && rowIndex2 < 6){
+                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2+2,columnIndex2+shift])
+                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                    newSelectedPieceRowIndex = rowIndex2
+                                    newSelectedPieceColumnIndex = columnIndex2
+                                    jumpChain = true
+                                }
+                            }
+                        }
+
+                    }
+
+                
+                    if(rowIndex2 > 1){
+                        if(columnIndex2-shift<=3 && columnIndex2-shift>=0){
+                            if((updatedBoard2[rowIndex2-1][columnIndex2-shift].player == 1 && state.turn == 'player2') || (updatedBoard2[rowIndex2-1][columnIndex2-shift].player == 2 && isKing && state.turn == 'player1')){
+                                if(updatedBoard2[rowIndex2-2][columnIndex2-shift].player == 0 && rowIndex2 < 6){
+                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2-2,columnIndex2-shift])
+                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                    newSelectedPieceRowIndex = rowIndex2
+                                    newSelectedPieceColumnIndex = columnIndex2
+                                    jumpChain = true
+                                } 
+                            }
+                        }
+    
+                        if(columnIndex2+shift<=3 && columnIndex2+shift>=0){
+                            if(((updatedBoard2[rowIndex2-1][columnIndex2].player == 1 && state.turn == 'player2')  || (updatedBoard2[rowIndex2-1][columnIndex2].player == 2 && isKing && state.turn == 'player1'))){
+                                if(updatedBoard2[rowIndex2-2][columnIndex2+shift].player == 0 && rowIndex2 < 6){
+                                    updatedBoard2[rowIndex2][columnIndex2].move.moves.push([rowIndex2-2,columnIndex2+shift])
+                                    updatedBoard2[rowIndex2][columnIndex2].move.canMove = true
+                                    newSelectedPieceRowIndex = rowIndex2
+                                    newSelectedPieceColumnIndex = columnIndex2
+                                    jumpChain = true
+                                }
+                            }
+                        }
+                    }
+
             }
 
-            //put the selected piece in the new location
-            if(selectedPiece.player !== 0){
-                updatedBoard2[rowIndex2][columnIndex2] = selectedPiece
-                updatedBoard2[rowIndex2][columnIndex2].selected = /* jumped */false
-             }
-            //get rid of selected piece
-            updatedBoard2[state.selectedPieceRowIndex][state.selectedPieceColumnIndex] = {player: 0, type: {king: false, ghost: false}, move: {canMove: false, moves: []}, selected: false}
+
+            const playerTurn = jumpChain ? state.turn : (state.turn==='player1' ? 'player2' : 'player1')
 
             //update turn and board
             return{
                 ...state,
-                jumpChain: false,
-                turn: state.turn==='player1' ? 'player2' : 'player1',
-                board: updatedBoard2
+                jumpChain: jumpChain,
+                jumpChainStopper: false,
+                turn: playerTurn,
+                board: updatedBoard2,
+                selectedPieceRowIndex: newSelectedPieceRowIndex,
+                selectedPieceColumnIndex: newSelectedPieceColumnIndex
             }
 
 
@@ -249,14 +325,30 @@ export default function CheckerBoard(){
 
     const [state, dispatch] = useReducer(checkersReducer, initialState)
 
-    for(let i=0; i<state.board.length; i++){
-        for(let j=0; j<state.board[i].length; j++){
-            checkMoveConditions(i,j)
+
+
+
+    if(!state.jumpChainStopper && state.jumpChain){
+        state.jumpChainStopper = true
+        for(let i=0; i<state.board.length; i++){
+            for(let j=0; j<state.board[i].length; j++){
+                if(i != state.selectedPieceRowIndex && j != state.selectedPieceColumnIndex){
+                state.board[i][j].move.canMove = false
+                state.board[i][j].move.moves = []
+                }
+            }
+        }
+        dispatch({ type: 'SELECTPIECE', coords: [state.selectedPieceRowIndex, state.selectedPieceColumnIndex]})
+    } else {
+        for(let i=0; i<state.board.length; i++){
+            for(let j=0; j<state.board[i].length; j++){
+                checkMoveConditions(i,j)
+            }
         }
     }
+
     
     function checkMoveConditions(i, j){
-        let canMoveCondition = false
         let nextPlayer = 0
         state.board[i][j].move.moves=[]
         if(state.board[i][j].player > 0 && state.board[i][j].type.ghost == false){
@@ -281,13 +373,10 @@ export default function CheckerBoard(){
             if((state.turn === 'player1' && state.board[i][j].player == 1) || (state.turn === 'player2' && state.board[i][j].player == 2 && state.board[i][j].type.king)){
                 //normal moving conditions
                 if(i<7){
-                    canMoveCondition = (state.board[i+1][j].player == 0)
                     if(state.board[i+1][j].player == 0){
-                        canMoveCondition = true
-                        state.board[i][j].move.moves.push([i+1,j])
+                        state.board[i][j].move.moves.push([i+1,j])  
                     }
                     if((j-shift <= 3) && (j-shift >= 0)){
-                        canMoveCondition = canMoveCondition || (state.board[i+1][j-shift].player == 0)  
                         if(state.board[i+1][j-shift].player == 0){
                             state.board[i][j].move.moves.push([i+1,j-shift])
                         }
@@ -298,7 +387,6 @@ export default function CheckerBoard(){
                             nextPlayer = state.board[i+1][j].player
                             if((nextPlayer == 2 && state.turn == 'player1') || (nextPlayer==1 && state.board[i][j].type.king && state.turn == 'player2')){
                                 if(state.board[i+2][j+shift].player == 0){
-                                    canMoveCondition = true
                                     state.board[i][j].move.moves.push([i+2,j+shift])
                                 }
                             }
@@ -308,7 +396,6 @@ export default function CheckerBoard(){
                             nextPlayer = state.board[i+1][j-shift].player
                             if((nextPlayer == 2 && state.turn == 'player1') || (nextPlayer == 1 && state.board[i][j].type.king && state.turn == 'player2')){
                                 if(state.board[i+2][j-shift].player == 0){
-                                    canMoveCondition = true
                                     state.board[i][j].move.moves.push([i+2,j-shift])
                                 }
                             }
@@ -321,14 +408,11 @@ export default function CheckerBoard(){
             //moving conditions for player 2
             if(state.turn == 'player2' && state.board[i][j].player == 2  || (state.turn === 'player1' && state.board[i][j].player == 1 && state.board[i][j].type.king)){
                 if(i>0){
-                    canMoveCondition = (state.board[i-1][j].player == 0)
                     if(state.board[i-1][j].player == 0){
                         state.board[i][j].move.moves.push([i-1,j])
                     }
                     if((j-shift <= 3) && (j-shift >= 0)){
-                        canMoveCondition = canMoveCondition || (state.board[i-1][j-shift].player == 0)
                         if(state.board[i-1][j-shift].player == 0){
-                            canMoveCondition = true
                             state.board[i][j].move.moves.push([i-1,j-shift])
                         }
                     }
@@ -338,7 +422,6 @@ export default function CheckerBoard(){
                             nextPlayer = state.board[i-1][j-shift].player
                             if((nextPlayer == 1 && state.turn == 'player2') || (nextPlayer == 2 && state.board[i][j].type.king && state.turn == 'player1')){
                                 if(state.board[i-2][j-shift].player == 0){
-                                    canMoveCondition = true
                                     state.board[i][j].move.moves.push([i-2,j-shift])
                                 }
                             }
@@ -348,7 +431,6 @@ export default function CheckerBoard(){
                             nextPlayer = state.board[i-1][j].player
                             if((nextPlayer == 1 && state.turn == 'player2') || (nextPlayer == 2 && state.board[i][j].type.king && state.turn == 'player1')){
                                 if(state.board[i-2][j+shift].player == 0){
-                                    canMoveCondition = true
                                     state.board[i][j].move.moves.push([i-2,j+shift])
                                 }
                             }
@@ -394,12 +476,15 @@ export default function CheckerBoard(){
         return(
             <td className={`
             ${styles.blackSquare}
-            ${state.board[rowIndex][columnIndex].move.canMove == true ? styles.highlight : styles.none}
+            ${(state.board[rowIndex][columnIndex].move.canMove && !state.jumpChain) == true ? styles.highlight : styles.none}
             ${state.board[rowIndex][columnIndex].selected == true ? styles.selected : styles.none}
             `}
             onClick={
-                state.board[rowIndex][columnIndex].type.ghost == true ? () => {takeTurn(rowIndex, columnIndex)}
-                : state.board[rowIndex][columnIndex].move.canMove == true ? () => {selectPiece(rowIndex, columnIndex)} : none} 
+                
+                 state.jumpChain && (rowIndex == state.selectedPieceRowIndex && columnIndex == state.selectedPieceColumnIndex) ? () => {dispatch({ type: 'SWITCHPLAYER' })}
+                : state.board[rowIndex][columnIndex].type.ghost == true ? () => {takeTurn(rowIndex, columnIndex)}
+                : (state.board[rowIndex][columnIndex].move.canMove == true && !state.jumpChain) ? () => {selectPiece(rowIndex, columnIndex)}
+                 : none} 
             key={`black-${(rowIndex*4) + columnIndex}
             `}
             >
@@ -421,15 +506,15 @@ export default function CheckerBoard(){
                         <tr key={rowIndex+1}>
                         {state.board[rowIndex].map((cell, columnIndex) => (
                             (rowIndex % 2 === 1 ? 
-                            <>
+                            <Fragment key={(rowIndex*4+columnIndex)}>
                             {WhiteSquare(rowIndex, columnIndex)}
                             {BlackSquare(rowIndex, columnIndex)}
-                            </> 
+                            </Fragment> 
                             :
-                            <>
+                            <Fragment key={(rowIndex*4+columnIndex)}>
                             {BlackSquare(rowIndex, columnIndex)}
                             {WhiteSquare(rowIndex, columnIndex)}
-                            </>
+                            </Fragment>
                             )
                         ))}
                         </tr>
